@@ -1,0 +1,63 @@
+
+group 'tr.com.korayucar'
+version '1.0-SNAPSHOT'
+ 
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.8'
+  distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+}
+
+
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+
+sourceCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+     
+}
+
+dependencies {
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.1.0.201509280440-r'
+    compile 'org.eclipse.jgit:org.eclipse.jgit.archive:4.1.0.201509280440-r'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'com.github.korayucar'
+            artifactId 'gitcms'
+            version '0.0.7-SNAPSHOT'
+            from components.java
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+    repositories {
+        maven {
+            url  "https://oss.sonatype.org/content/repositories/snapshots"
+            credentials {
+                username = "koray"
+                password = "199022"
+            }
+        } 
+        maven {
+            url  "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                username = "koray"
+                password = "199022"
+            }
+        } 
+    }
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
