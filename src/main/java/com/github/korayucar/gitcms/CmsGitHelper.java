@@ -1,5 +1,6 @@
 package com.github.korayucar.gitcms;
 
+import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -87,10 +88,16 @@ public class CmsGitHelper {
             throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
         }
         Git.cloneRepository()
-                .setBranch(branchName)
                 .setDirectory(temp)
                 .setCloneSubmodules(true)
-                .setURI(repository.getAbsolutePath()).call();
+                .setURI(repository.getAbsolutePath())
+                .call()
+                .checkout()
+                .setForce(true)
+                .setCreateBranch(true)
+                .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
+                .setName(branchName)
+                .call();
 
     }
     
