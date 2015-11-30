@@ -13,6 +13,5 @@ public class CmsRemoteRepositoryTest {
     public void testGetUrl() throws Exception {
         File temp = TestUtil.createTempDirectory();
         TestUtil.createTestRepository(temp);
-        
     }
 }
