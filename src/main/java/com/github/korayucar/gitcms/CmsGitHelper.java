@@ -95,11 +95,29 @@ public class CmsGitHelper {
     public static void mergeBranches(File branchRepository, File remoteRepository, String remoteBranchName , String localBranchName) throws IOException, GitAPIException {
 
 //        Git.open(branchRepository).fetch().setRemote("origin").setRefSpecs(new RefSpec("refs/heads/"+remoteBranchName)).call();
-        Git.open(branchRepository).branchCreate()
-                .setStartPoint("origin/" + remoteBranchName)
-                .setName(remoteBranchName)
-                .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-                .call();
+        try {
+            Git.open(branchRepository).branchCreate()
+                    .setStartPoint("origin/" + remoteBranchName)
+                    .setName(remoteBranchName)
+                    .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
+                    .call();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            try{
+                Git.open(branchRepository).pull()
+                        .setRemoteBranchName(remoteBranchName)
+                        .setStrategy(MergeStrategy.THEIRS)
+                        .call();
+            }
+            catch (Exception e2)
+            {
+                e2.printStackTrace();
+            }
+        }
+         
+        
 //        Git.open(branchRepository).checkout().
 //                setCreateBranch(true).
 //                setName(remoteBranchName).
@@ -115,6 +133,21 @@ public class CmsGitHelper {
                 .call();
 
         Git.open(branchRepository).push().setForce(true).call();
+        if(localBranchName == "master"){
+            Git.open(remoteRepository).reset().setMode(ResetCommand.ResetType.HARD).setRef("HEAD");
+        }
+    }
+
+    public static void publishStagingArea( File repository, String remoteBranchName , String localBranchName) throws IOException, GitAPIException {
+
+
+        MergeCommand merge = Git.open(repository)
+                .merge();
+        MergeResult result= merge.setStrategy(MergeStrategy.THEIRS)
+                .include( merge.getRepository().getRef(remoteBranchName))
+                .setMessage("Merged from " + remoteBranchName + " into " + localBranchName)
+                .setCommit(true)
+                .call();
     }
 
 
@@ -180,12 +213,12 @@ public class CmsGitHelper {
         }
     }
 
-    public static void stageAll(String rootPath, String branchName, File repository) throws IOException, GitAPIException {
+    public static void stageAll(  File repository) throws IOException, GitAPIException {
         Git.open(repository).add().addFilepattern(".").setUpdate(true).call();
     }
 
-    public static void commitAllChanges(String rootPath, String branchName, File repository , String commitMessage, String authorName , String authorMail) throws IOException, GitAPIException {
-        stageAll(rootPath,branchName,repository);
+    public static void commitAllChanges(File remoteRepository, String branchName, File repository , String commitMessage, String authorName , String authorMail) throws IOException, GitAPIException {
+        stageAll( repository);
         if(commitMessage == null || StringUtils.isEmpty(commitMessage))
             commitMessage = "no commit message available";
         Git.open(repository)
@@ -194,8 +227,12 @@ public class CmsGitHelper {
                 .setAuthor(authorName , authorMail)
                 .setCommitter(authorName , authorMail)
                 .call();
-        if(!branchName.equals("master") ){
+//        if(!branchName.equals("master") )
+        {
             Git.open(repository).push().call();
+        }
+        if(branchName == "master"){
+            Git.open(remoteRepository).reset().setMode(ResetCommand.ResetType.HARD).setRef("HEAD");
         }
     }
 
